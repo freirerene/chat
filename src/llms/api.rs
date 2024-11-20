@@ -1,9 +1,7 @@
 use reqwest::header::{HeaderMap, HeaderValue, AUTHORIZATION, CONTENT_TYPE};
-use serde_json::json;
-use serde_json::Value;
+use serde_json::{json, Value};
 use std::error::Error;
 
-// A função `chat` que será usada no `main.rs`
 pub async fn chat(
     api_key: String,
     prompt: &str,

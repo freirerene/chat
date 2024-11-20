@@ -1,2 +1,2 @@
-pub mod getenv;
+pub mod locals;
 pub mod queries;

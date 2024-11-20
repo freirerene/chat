@@ -1,23 +1,45 @@
-mod database;
-mod openai;
+mod backend;
+mod llms;
 mod utils;
 use anyhow::Result;
-use crossterm::event::{DisableMouseCapture, EnableMouseCapture};
-use crossterm::terminal::{
-    disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen,
+use crossterm::{
+    event::{DisableMouseCapture, EnableMouseCapture},
+    terminal::{
+        disable_raw_mode, enable_raw_mode, EnableLineWrap, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
 };
-use ratatui::backend::CrosstermBackend;
-use ratatui::widgets::{Block, Borders};
-use ratatui::Terminal;
+use ratatui::{
+    backend::CrosstermBackend,
+    style::{Color, Style},
+    text::Line,
+    widgets::{Block, BorderType, Borders, Padding},
+    Terminal,
+};
 use std::io;
 use tui_textarea::{Input, Key, TextArea};
-use utils::getenv::envkeys;
-use utils::queries::query_response;
+use utils::{
+    locals::{envkeys, read_preferences},
+    queries::query_response,
+};
 
 #[tokio::main]
 async fn main() -> Result<()> {
+    let bg_color = Color::Rgb(49, 50, 68);
+    let border_color = Color::Rgb(180, 190, 254);
+
     let stdout = io::stdout();
     let mut stdout = stdout.lock();
+
+    let (llm, model) = match read_preferences("preferences.json") {
+        Ok((x, y)) => (x.clone(), y.clone()),
+        Err(e) => {
+            eprintln!("Error reading preferences: {}", e);
+            (String::from("undefined"), String::from("undefined"))
+        }
+    };
+
+    let models = " ".to_owned() + &llm + "  -  " + &model + " ";
 
     let api_key = match envkeys(".env", "OPENAI_API_KEY")? {
         Some(key) => key,
@@ -28,12 +50,29 @@ async fn main() -> Result<()> {
     };
 
     enable_raw_mode()?;
-    crossterm::execute!(stdout, EnterAlternateScreen, EnableMouseCapture)?;
+    crossterm::execute!(
+        stdout,
+        EnterAlternateScreen,
+        EnableMouseCapture,
+        EnableLineWrap
+    )?;
     let backend = CrosstermBackend::new(stdout);
     let mut term = Terminal::new(backend)?;
 
     let mut textarea = TextArea::default();
-    textarea.set_block(Block::default().borders(Borders::ALL).title("CHAT"));
+    textarea.set_block(
+        Block::default()
+            .borders(Borders::ALL)
+            .style(Style::default().bg(bg_color))
+            .border_type(BorderType::Rounded)
+            .border_style(Style::default().fg(border_color))
+            .padding(Padding::horizontal(10))
+            .title(Line::from("Chat").centered())
+            .title_bottom(Line::from(models).centered()),
+    );
+
+    // let style = Style::default().bg(Color::Red);
+    // textarea.set_style(style);
 
     loop {
         term.draw(|f| {

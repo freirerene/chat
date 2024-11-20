@@ -325,6 +325,7 @@ dependencies = [
  "libsql",
  "ratatui",
  "reqwest",
+ "serde",
  "serde_json",
  "tokio",
  "tui-textarea",
