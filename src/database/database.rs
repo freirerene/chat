@@ -59,8 +59,8 @@ async fn query_db(conn: &Connection) -> Result<Vec<(String, String)>> {
         .await?;
     let mut results = Vec::new();
     while let Some(row) = rows.next().await? {
-        let query: String = row.get(0).unwrap(); // Assuming column 0 is 'query'
-        let answer: String = row.get(1).unwrap(); // Assuming column 1 is 'answer'
+        let query: String = row.get(0).unwrap();
+        let answer: String = row.get(1).unwrap();
         results.push((query, answer));
     }
     Ok(results)
